@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>NetBeans Simulator - Hostería Suiza (Desde Cero)</title>
+<style>
+/* ===== ESTILOS GENERALES DEL IDE (NETBEANS) ===== */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: "Segoe UI", Tahoma, sans-serif; font-size: 12px; background: #1e1e1e; color: #333; height: 100vh; overflow: hidden; }
+.ide { display: flex; flex-direction: column; height: 100vh; background: #F0F0F0; }
+
+/* Toolbar */
+.toolbar { display: flex; align-items: center; gap: 6px; padding: 4px 8px; background: linear-gradient(#FDFDFD, #E8E8E8); border-bottom: 1px solid #C8C8C8; height: 34px; }
+.toolbar-icon { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border: 1px solid transparent; border-radius: 3px; cursor: pointer; font-size: 14px; }
+.toolbar-icon:hover { background: #D6E6F7; border-color: #7EB4EA; }
+.toolbar-icon.run { color: #2E8B57; font-weight: bold; }
+.toolbar-sep { width: 1px; height: 20px; background: #CCC; margin: 0 4px; }
+.proj-name { color: #333; font-size: 11px; font-weight: 600; margin-left: 12px; padding: 3px 10px; background: #E8F0FE; border: 1px solid #B6D4FE; border-radius: 3px; }
+
+/* Workspace */
+.workspace { display: flex; flex: 1; overflow: hidden; }
+
+/* LEFT PANEL */
+.left-panel { width: 260px; background: #F0F0F0; border-right: 1px solid #C8C8C8; display: flex; flex-direction: column; }
+.panel-header { padding: 4px 8px; background: linear-gradient(#FAFAFA, #E8E8E8); border-bottom: 1px solid #D0D0D0; font-weight: 600; color: #333; font-size: 11px; display: flex; justify-content: space-between; }
+.tree { flex: 1; overflow-y: auto; padding: 4px 0; }
+.tree-node { padding: 3px 8px 3px 16px; cursor: pointer; display: flex; align-items: center; gap: 4px; color: #333; white-space: nowrap; font-size: 11.5px; }
+.tree-node:hover { background: #EAF2FB; }
+.tree-node.active { background: #3875D7; color: #fff; }
+.tree-node .icon { font-size: 13px; width: 16px; text-align: center; }
+.indent-1 { padding-left: 28px; } .indent-2 { padding-left: 44px; } .indent-3 { padding-left: 60px; }
+
+/* CENTER PANEL */
+.center-panel { flex: 1; display: flex; flex-direction: column; background: #FFF; overflow: hidden; }
+.editor-tabs { display: flex; background: #E8E8E8; border-bottom: 1px solid #C8C8C8; height: 28px; }
+.editor-tab { padding: 0 16px; display: flex; align-items: center; gap: 6px; border-right: 1px solid #D0D0D0; cursor: pointer; color: #555; font-size: 11px; }
+.editor-tab.active { background: #FFF; color: #000; border-bottom: 1px solid #FFF; margin-bottom: -1px; font-weight: 600; }
+.editor-content { flex: 1; overflow: auto; padding: 12px 0; background: #FFF; font-family: "Consolas", monospace; font-size: 12.5px; line-height: 1.5; display: none; }
+.editor-content.active { display: block; }
+
+/* Code Highlighting */
+.kw { color: #0000FF; font-weight: bold; } .str { color: #008000; } .cmt { color: #808080; font-style: italic; }
+.cls { color: #2B91AF; } .num { color: #098658; } .ann { color: #808080; } .sql-kw { color: #0000FF; font-weight: bold; }
+.code-line { padding: 0 16px; white-space: pre; } .code-line:hover { background: #F5F5F5; }
+.line-num { display: inline-block; width: 30px; text-align: right; padding-right: 12px; color: #999; user-select: none; }
+
+/* RIGHT PANEL */
+.right-panel { width: 240px; background: #F0F0F0; border-left: 1px solid #C8C8C8; display: flex; flex-direction: column; }
+.palette-section { border-bottom: 1px solid #D0D0D0; }
+.palette-group { padding: 6px 10px; font-size: 11px; }
+.palette-subtitle { color: #666; font-weight: 600; margin: 6px 0 4px; font-size: 10.5px; }
+.palette-item { padding: 2px 0; color: #333; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+.palette-item:hover { background: #EAF2FB; }
+.properties-section { flex: 1; overflow-y: auto; }
+.prop-row { display: grid; grid-template-columns: 45% 1fr; padding: 3px 8px; font-size: 11px; border-bottom: 1px solid #EDEDED; }
+.prop-row .k { color: #666; } .prop-row .v { color: #111; font-family: Consolas, monospace; }
+.prop-title { padding: 6px 8px; font-size: 10.5px; color: #2E7DD1; font-weight: 600; background: #F8F9FA; border-bottom: 1px solid #D0D0D0; }
+
+/* BOTTOM PANEL */
+.bottom-panel { height: 140px; background: #FFF; border-top: 1px solid #C8C8C8; display: flex; flex-direction: column; }
+.output-tabs { display: flex; background: #E8E8E8; border-bottom: 1px solid #C8C8C8; height: 26px; }
+.output-tab { padding: 0 14px; display: flex; align-items: center; border-right: 1px solid #D0D0D0; font-size: 11px; color: #555; cursor: pointer; }
+.output-tab.active { background: #FFF; color: #000; font-weight: 600; }
+.output-content { flex: 1; background: #1E1E1E; color: #D4D4D4; font-family: "Consolas", monospace; font-size: 12px; padding: 8px 12px; overflow-y: auto; white-space: pre-wrap; line-height: 1.4; }
+.out-green { color: #6A9955; } .out-blue { color: #569CD6; } .out-yellow { color: #DCDCAA; }
+
+/* ===== DISEÑO DEL JFRAME (SWING) ===== */
+.design-view { flex: 1; display: none; background: #E8E8E8; overflow: auto; padding: 20px; justify-content: center; }
+.design-view.active { display: flex; }
+.jframe-wrapper { display: flex; flex-direction: column; gap: 8px; align-items: center; width: 100%; max-width: 800px; }
+.design-guide { font-size: 11px; color: #666; background: #FFFBE6; padding: 4px 12px; border: 1px dashed #E8D77A; border-radius: 3px; }
+
+.jframe { width: 100%; background: #F0F0F0; border: 1px solid #5A5A5A; border-radius: 4px 4px 3px 3px; box-shadow: 0 10px 30px rgba(0,0,0,.4); overflow: hidden; user-select: none; }
+.jframe-titlebar { height: 30px; display: flex; align-items: center; gap: 8px; padding-left: 10px; background: linear-gradient(#FAFAFA, #EDEDED); border-bottom: 1px solid #DCDCDC; }
+.jframe-titlebar .title-icon { font-size: 13px; color: #2E7DD1; }
+.jframe-titlebar .title-text { flex: 1; color: #1a1a1a; font-size: 12px; }
+.jframe-win-btns { display: flex; height: 100%; }
+.jframe-win-btn { width: 40px; height: 100%; border: none; background: transparent; cursor: pointer; font-size: 11px; color: #333; }
+.jframe-win-btn.close:hover { background: #E81123; color: #fff; }
+
+/* JTabbedPane Simulator */
+.jtabbed { display: flex; background: #F0F0F0; padding: 10px 10px 0 10px; border-bottom: 1px solid #C8C8C8; }
+.jtab { padding: 6px 15px; background: #E8E8E8; border: 1px solid #C8C8C8; border-bottom: none; margin-right: 2px; cursor: pointer; font-size: 11px; border-radius: 3px 3px 0 0; color: #333; }
+.jtab.active { background: #FFF; font-weight: bold; border-bottom: 1px solid #FFF; margin-bottom: -1px; }
+.jpanel { padding: 15px; background: #FFF; border: 1px solid #C8C8C8; border-top: none; min-height: 450px; }
+.jcontent { display: none; } .jcontent.active { display: block; }
+
+/* Controles Swing */
+.jgrid { display: grid; grid-template-columns: 90px 1fr; gap: 10px 14px; align-items: center; margin-bottom: 15px; }
+.jgrid label { text-align: right; color: #222; font-size: 12px; }
+.jgrid input, .jgrid select { height: 26px; padding: 0 8px; border: 1px solid #B5B5B5; border-radius: 2px; background: #fff; font-family: inherit; font-size: 12px; }
+.jgrid input:focus, .jgrid select:focus { border-color: #4A90D9; outline: none; }
+.jbuttons { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
+.jbtn { padding: 6px 15px; font-family: inherit; font-size: 12px; background: linear-gradient(#FDFDFD, #E3E3E3); border: 1px solid #ADADAD; border-radius: 3px; cursor: pointer; }
+.jbtn:hover { background: linear-gradient(#EDF4FC, #D6E6F7); border-color: #7EB4EA; }
+.jbtn-danger { background: linear-gradient(#FDFDFD, #F2DEDE); border-color: #D64541; color: #A94442; }
+.jbtn-danger:hover { background: #F2DEDE; }
+
+/* JTable Simulator */
+.jtable { width: 100%; border-collapse: collapse; font-size: 11px; border: 1px solid #C8C8C8; }
+.jtable th, .jtable td { border: 1px solid #E0E0E0; padding: 6px 8px; text-align: left; }
+.jtable th { background: #F0F0F0; font-weight: 600; color: #333; border-bottom: 1px solid #C8C8C8; }
+.jtable tr:nth-child(even) { background: #FAFAFA; }
+
+/* SQL DB Viewer Style */
+.sql-viewer { background: #1e1e1e; color: #d4d4d4; padding: 10px; border-radius: 4px; font-family: Consolas, monospace; font-size: 11px; height: 350px; overflow-y: auto; }
+.sql-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+.sql-table th { background: #333; color: #569cd6; text-align: left; padding: 4px 8px; border: 1px solid #555; }
+.sql-table td { border: 1px solid #444; padding: 4px 8px; color: #ce9178; }
+.sql-table tr:nth-child(even) { background: #252526; }
+
+/* JOptionPane Overlay */
+.joverlay { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,.3); z-index: 100; }
+.joverlay.show { display: flex; }
+.jdialog { width: 360px; background: #F0F0F0; border: 1px solid #5A5A5A; border-radius: 3px; box-shadow: 0 12px 34px rgba(0,0,0,.6); }
+.jdialog-title { padding: 6px 10px; font-weight: 600; background: linear-gradient(#FAFAFA, #E8E8E8); border-bottom: 1px solid #D0D0D0; font-size: 12px; }
+.jdialog-body { display: flex; gap: 12px; padding: 18px 16px; align-items: flex-start; }
+.jdialog-icon { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 18px; font-weight: bold; }
+.icon-info { background: #2E7DD1; } .icon-warn { background: #E8A33D; } .icon-error { background: #D64541; } .icon-success { background: #2E8B57; }
+.jdialog-text { font-size: 12.5px; line-height: 1.5; color: #222; padding-top: 6px; }
+.jdialog-footer { padding: 0 16px 16px; display: flex; justify-content: flex-end; }
+</style>
+</head>
+<body>
+
+<div class="ide">
+  <div class="toolbar">
+    <div class="toolbar-icon" title="New File">📄</div>
+    <div class="toolbar-icon run" id="btnRun" title="Run Project (F6)">▶</div>
+    <div class="toolbar-sep"></div>
+    <!-- BOTÓN PARA REINICIAR LA BASE DE DATOS -->
+    <div class="toolbar-icon" onclick="resetDB()" title="Reiniciar Base de Datos (Vaciar todo)" style="color: #D64541; font-size: 16px;">🔄</div>
+    <div class="toolbar-sep"></div>
+    <span class="proj-name">📦 HosteríaSuiza (POO + JDBC + MySQL)</span>
+  </div>
+
+  <div class="workspace">
+    <!-- EXPLORADOR DE PROYECTOS -->
+    <div class="left-panel">
+      <div class="panel-header"><span>Projects</span><span>✕</span></div>
+      <div class="tree" id="tree">
+        <div class="tree-node"><span class="icon">📁</span>HosteríaSuiza</div>
+        <div class="tree-node indent-1"><span class="icon">📁</span>Source Packages</div>
+        
+        <div class="tree-node indent-2"><span class="icon">📁</span>com.hosteria.modelo</div>
+        <div class="tree-node indent-3" onclick="showFile('cliente', this)"><span class="icon">📄</span>Cliente.java</div>
+        <div class="tree-node indent-3" onclick="showFile('habitacion', this)"><span class="icon">📄</span>Habitacion.java</div>
+        <div class="tree-node indent-3" onclick="showFile('reserva', this)"><span class="icon">📄</span>Reserva.java</div>
+        
+        <div class="tree-node indent-2"><span class="icon">📁</span>com.hosteria.datos</div>
+        <div class="tree-node indent-3" onclick="showFile('conexion', this)"><span class="icon">📄</span>Conexion.java</div>
+        <div class="tree-node indent-3" onclick="showFile('dao', this)"><span class="icon">📄</span>ReservaDAO.java</div>
+        
+        <div class="tree-node indent-2"><span class="icon">📁</span>com.hosteria.vista</div>
+        <div class="tree-node indent-3 active" onclick="showFile('form', this)"><span class="icon">📄</span>FrmReservas.java</div>
+        
+        <div class="tree-node indent-2" onclick="showFile('script_bd', this)"><span class="icon">📄</span>script_bd.sql</div>
+        <div class="tree-node indent-1"><span class="icon">📁</span>Libraries</div>
+      </div>
+    </div>
+
+    <!-- EDITOR Y DISEÑO -->
+    <div class="center-panel">
+      <div class="editor-tabs">
+        <div class="editor-tab active" id="tabSource" onclick="switchTab('source')">Source</div>
+        <div class="editor-tab" id="tabDesign" onclick="switchTab('design')">Design</div>
+      </div>
+      <div class="editor-content active" id="viewSource"></div>
+      
+      <!-- JFRAME SIMULATOR -->
+      <div class="design-view" id="viewDesign">
+        <div class="jframe-wrapper">
+          <div class="design-guide">Simulador Java Swing + Base de Datos SQL (Persistencia JDBC)</div>
+          <div class="jframe">
+            <div class="jframe-titlebar">
+              <span class="title-icon">▣</span>
+              <span class="title-text">Hostería Suiza - Sistema Interno</span>
+              <div class="jframe-win-btns">
+                <button class="jframe-win-btn">—</button>
+                <button class="jframe-win-btn">▢</button>
+                <button class="jframe-win-btn close">✕</button>
+              </div>
+            </div>
+            
+            <div class="jtabbed">
+              <div class="jtab active" onclick="switchJTab('reservas', this)">Gestión de Reservas</div>
+              <div class="jtab" onclick="switchJTab('habitaciones', this)">Habitaciones</div>
+              <div class="jtab" onclick="switchJTab('clientes', this)">Huéspedes</div>
+              <div class="jtab" onclick="switchJTab('db', this); actualizarVistaSQL();">🗄️ BD (SQL)</div>
+            </div>
+            
+            <div class="jpanel">
+              <!-- PESTAÑA RESERVAS -->
+              <div id="jtab-reservas" class="jcontent active">
+                <div class="jgrid" style="grid-template-columns: 90px 1fr 90px 1fr;">
+                  <label>Huésped:</label> <select id="cboCliente"></select>
+                  <label>Habitación:</label> <select id="cboHabitacion"></select>
+                  
+                  <label>F. Ingreso:</label> <input type="date" id="txtFIngreso">
+                  <label>F. Salida:</label> <input type="date" id="txtFSalida">
+                </div>
+                <div class="jbuttons">
+                  <button class="jbtn" onclick="registrarReserva()">Registrar Reserva</button>
+                  <button class="jbtn jbtn-danger" onclick="cancelarReserva()">Cancelar Reserva Sel.</button>
+                  <button class="jbtn" onclick="limpiarReserva()">Limpiar</button>
+                </div>
+                
+                <div class="jgrid" style="grid-template-columns: 90px 1fr; margin-bottom: 5px;">
+                  <label>Buscar:</label>
+                  <input type="text" id="txtBuscar" placeholder="Buscar por Huésped o Habitación..." onkeyup="filtrarReservas()">
+                </div>
+
+                <table class="jtable" id="tblReservas">
+                  <thead>
+                    <tr><th>ID</th><th>Huésped</th><th>Habitación</th><th>Ingreso</th><th>Salida</th><th>Estado</th></tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+
+              <!-- PESTAÑA HABITACIONES (CON FORMULARIO DE REGISTRO) -->
+              <div id="jtab-habitaciones" class="jcontent">
+                <div class="jgrid" style="grid-template-columns: 90px 1fr 90px 1fr;">
+                  <label>Número:</label> <input type="text" id="txtHabNumero" placeholder="Ej: 101">
+                  <label>Precio S/:</label> <input type="number" id="txtHabPrecio" placeholder="Ej: 50">
+                  
+                  <label>Tipo:</label> <input type="text" id="txtHabTipo" placeholder="Ej: Simple, Suite" style="grid-column: span 3;">
+                </div>
+                <div class="jbuttons">
+                  <button class="jbtn" onclick="registrarHabitacion()">Registrar Habitación</button>
+                </div>
+                
+                <table class="jtable" id="tblHabitaciones">
+                  <thead><tr><th>Número</th><th>Tipo</th><th>Precio</th><th>Estado</th></tr></thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+
+              <!-- PESTAÑA CLIENTES -->
+              <div id="jtab-clientes" class="jcontent">
+                <div class="jgrid">
+                  <label>Nombre:</label> <input type="text" id="txtNombre">
+                  <label>DNI:</label> <input type="text" id="txtDni">
+                  <label>Teléfono:</label> <input type="text" id="txtTelefono">
+                </div>
+                <div class="jbuttons">
+                  <button class="jbtn" onclick="registrarCliente()">Registrar Huésped</button>
+                </div>
+                <table class="jtable" id="tblClientes">
+                  <thead><tr><th>ID</th><th>Nombre</th><th>DNI</th><th>Teléfono</th></tr></thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+
+              <!-- PESTAÑA BASE DE DATOS (SQL VIEWER) -->
+              <div id="jtab-db" class="jcontent">
+                <div class="sql-viewer" id="sqlViewer">
+                  <p style="color:#6a9955;">-- Mostrando datos de la Base de Datos HosteríaSuiza_DB (MySQL)</p>
+                  <p style="color:#6a9955;">-- SELECT * FROM Clientes;</p>
+                  <table class="sql-table" id="sqlTblClientes">
+                    <thead><tr><th>id_cliente</th><th>nombre</th><th>dni</th><th>telefono</th></tr></thead>
+                    <tbody></tbody>
+                  </table>
+                  
+                  <p style="color:#6a9955;">-- SELECT * FROM Habitaciones;</p>
+                  <table class="sql-table" id="sqlTblHabitaciones">
+                    <thead><tr><th>numero</th><th>tipo</th><th>precio</th><th>estado</th></tr></thead>
+                    <tbody></tbody>
+                  </table>
+
+                  <p style="color:#6a9955;">-- SELECT * FROM Reservas;</p>
+                  <table class="sql-table" id="sqlTblReservas">
+                    <thead><tr><th>id_reserva</th><th>id_cliente</th><th>numero_hab</th><th>f_ingreso</th><th>f_salida</th><th>estado</th></tr></thead>
+                    <tbody></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROPIEDADES -->
+    <div class="right-panel">
+      <div class="palette-section">
+        <div class="panel-header"><span>Palette</span><span>✕</span></div>
+        <div class="palette-group">
+          <div class="palette-subtitle">Swing Controls</div>
+          <div class="palette-item"><span>▦</span>Table</div>
+          <div class="palette-item"><span>▼</span>Combo Box</div>
+          <div class="palette-item"><span>🔘</span>Button</div>
+        </div>
+      </div>
+      <div class="properties-section">
+        <div class="panel-header"><span>Properties</span><span>✕</span></div>
+        <div class="prop-title">Conexion [JDBC]</div>
+        <div class="prop-row"><span class="k">url</span><span class="v">jdbc:mysql://localhost:3306/hosteria_db</span></div>
+        <div class="prop-row"><span class="k">user</span><span class="v">root</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bottom-panel">
+    <div class="output-tabs"><div class="output-tab active">Output - HosteríaSuiza (JDBC Log)</div></div>
+    <div class="output-content" id="outputLog"></div>
+  </div>
+</div>
+
+<!-- JOptionPane -->
+<div class="joverlay" id="overlay">
+  <div class="jdialog">
+    <div class="jdialog-title" id="dlgTitle">Mensaje</div>
+    <div class="jdialog-body">
+      <div class="jdialog-icon icon-info" id="dlgIcon">i</div>
+      <div class="jdialog-text" id="dlgText"></div>
+    </div>
+    <div class="jdialog-footer"><button class="jbtn" id="dlgOk">Aceptar</button></div>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   CÓDIGO JAVA + SQL (Para el editor)
+   ========================================================= */
+const CODIGOS = {
+  script_bd: `<span class="sql-kw">CREATE DATABASE</span> IF <span class="sql-kw">NOT EXISTS</span> hosteria_db;
+<span class="sql-kw">USE</span> hosteria_db;
+
+<span class="sql-kw">CREATE TABLE</span> clientes (
+    id_cliente <span class="kw">INT AUTO_INCREMENT PRIMARY KEY</span>,
+    nombre <span class="kw">VARCHAR</span>(100) <span class="kw">NOT NULL</span>,
+    dni <span class="kw">VARCHAR</span>(8) <span class="kw">UNIQUE NOT NULL</span>,
+    telefono <span class="kw">VARCHAR</span>(15)
+);
+
+<span class="sql-kw">CREATE TABLE</span> habitaciones (
+    numero <span class="kw">VARCHAR</span>(10) <span class="kw">PRIMARY KEY</span>,
+    tipo <span class="kw">VARCHAR</span>(50) <span class="kw">NOT NULL</span>,
+    precio <span class="kw">DECIMAL</span>(10,2) <span class="kw">NOT NULL</span>,
+    estado <span class="kw">VARCHAR</span>(20) <span class="kw">DEFAULT</span> <span class="str">'Disponible'</span>
+);
+
+<span class="sql-kw">CREATE TABLE</span> reservas (
+    id_reserva <span class="kw">INT AUTO_INCREMENT PRIMARY KEY</span>,
+    id_cliente <span class="kw">INT</span>,
+    numero_hab <span class="kw">VARCHAR</span>(10),
+    f_ingreso <span class="kw">DATE NOT NULL</span>,
+    f_salida <span class="kw">DATE NOT NULL</span>,
+    estado <span class="kw">VARCHAR</span>(20) <span class="kw">DEFAULT</span> <span class="str">'Confirmada'</span>,
+    <span class="sql-kw">FOREIGN KEY</span> (id_cliente) <span class="sql-kw">REFERENCES</span> clientes(id_cliente),
+    <span class="sql-kw">FOREIGN KEY</span> (numero_hab) <span class="sql-kw">REFERENCES</span> habitaciones(numero)
+);`,
+
+  conexion: `<span class="kw">package</span> com.hosteria.datos;
+
+<span class="kw">import</span> java.sql.Connection;
+<span class="kw">import</span> java.sql.DriverManager;
+<span class="kw">import</span> java.sql.SQLException;
+
+<span class="kw">public class</span> <span class="cls">Conexion</span> {
+    <span class="kw">private static final</span> String URL = <span class="str">"jdbc:mysql://localhost:3306/hosteria_db"</span>;
+    <span class="kw">private static final</span> String USER = <span class="str">"root"</span>;
+    <span class="kw">private static final</span> String PASSWORD = <span class="str">""</span>;
+
+    <span class="kw">public static</span> Connection conectar() {
+        Connection con = <span class="kw">null</span>;
+        <span class="kw">try</span> {
+            Class.forName(<span class="str">"com.mysql.cj.jdbc.Driver"</span>);
+            con = DriverManager.getConnection(URL, USER, PASSWORD);
+            System.out.println(<span class="str">"✅ Conexión exitosa a MySQL"</span>);
+        } <span class="kw">catch</span> (ClassNotFoundException | SQLException e) {
+            System.out.println(<span class="str">"❌ Error de conexión: "</span> + e.getMessage());
+        }
+        <span class="kw">return</span> con;
+    }
+}`,
+
+  dao: `<span class="kw">package</span> com.hosteria.datos;
+
+<span class="kw">import</span> java.sql.Connection;
+<span class="kw">import</span> java.sql.PreparedStatement;
+<span class="kw">import</span> javax.swing.JOptionPane;
+<span class="kw">import</span> com.hosteria.modelo.Reserva;
+
+<span class="kw">public class</span> <span class="cls">ReservaDAO</span> {
+    
+    <span class="kw">public void</span> guardarReserva(Reserva r) {
+        String sql = <span class="str">"INSERT INTO reservas (id_cliente, numero_hab, f_ingreso, f_salida, estado) VALUES (?, ?, ?, ?, ?)"</span>;
+        String sqlUpdateHab = <span class="str">"UPDATE habitaciones SET estado = 'Ocupada' WHERE numero = ?"</span>;
+        
+        <span class="kw">try</span> (Connection con = Conexion.conectar()) {
+            PreparedStatement ps = con.prepareStatement(sql);
+            ps.setInt(1, r.getCliente().getId());
+            ps.setString(2, r.getHabitacion().getNumero());
+            ps.setString(3, r.getFechaIngreso());
+            ps.setString(4, r.getFechaSalida());
+            ps.setString(5, <span class="str">"Confirmada"</span>);
+            ps.executeUpdate();
+            
+            PreparedStatement ps2 = con.prepareStatement(sqlUpdateHab);
+            ps2.setString(1, r.getHabitacion().getNumero());
+            ps2.executeUpdate();
+            
+            JOptionPane.showMessageDialog(<span class="kw">null</span>, <span class="str">"Reserva guardada en BD"</span>);
+        } <span class="kw">catch</span> (Exception e) {
+            JOptionPane.showMessageDialog(<span class="kw">null</span>, <span class="str">"Error: "</span> + e.getMessage());
+        }
+    }
+}`,
+
+  cliente: `<span class="kw">package</span> com.hosteria.modelo;
+
+<span class="kw">public class</span> <span class="cls">Cliente</span> {
+    <span class="kw">private int</span> id; <span class="kw">private</span> String nombre; <span class="kw">private</span> String dni; <span class="kw">private</span> String telefono;
+    <span class="kw">public</span> Cliente(<span class="kw">int</span> id, String nombre, String dni, String telefono) {
+        <span class="kw">this</span>.id = id; <span class="kw">this</span>.nombre = nombre; <span class="kw">this</span>.dni = dni; <span class="kw">this</span>.telefono = telefono;
+    }
+    <span class="kw">public int</span> getId() { <span class="kw">return</span> id; }
+    <span class="kw">public</span> String getNombre() { <span class="kw">return</span> nombre; }
+}`,
+
+  habitacion: `<span class="kw">package</span> com.hosteria.modelo;
+
+<span class="kw">public class</span> <span class="cls">Habitacion</span> {
+    <span class="kw">private</span> String numero; <span class="kw">private</span> String tipo; <span class="kw">private double</span> precio; <span class="kw">private</span> String estado;
+    <span class="kw">public</span> Habitacion(String numero, String tipo, <span class="kw">double</span> precio) {
+        <span class="kw">this</span>.numero = numero; <span class="kw">this</span>.tipo = tipo; <span class="kw">this</span>.precio = precio; <span class="kw">this</span>.estado = <span class="str">"Disponible"</span>;
+    }
+    <span class="kw">public</span> String getNumero() { <span class="kw">return</span> numero; }
+    <span class="kw">public</span> String getEstado() { <span class="kw">return</span> estado; }
+    <span class="kw">public void</span> setEstado(String estado) { <span class="kw">this</span>.estado = estado; }
+}`,
+
+  reserva: `<span class="kw">package</span> com.hosteria.modelo;
+
+<span class="kw">public class</span> <span class="cls">Reserva</span> {
+    <span class="kw">private int</span> id; <span class="kw">private</span> Cliente cliente; <span class="kw">private</span> Habitacion habitacion;
+    <span class="kw">private</span> String fechaIngreso; <span class="kw">private</span> String fechaSalida; <span class="kw">private</span> String estado;
+    <span class="kw">public</span> Reserva(<span class="kw">int</span> id, Cliente cliente, Habitacion habitacion, String fIn, String fOut) {
+        <span class="kw">this</span>.id = id; <span class="kw">this</span>.cliente = cliente; <span class="kw">this</span>.habitacion = habitacion;
+        <span class="kw">this</span>.fechaIngreso = fIn; <span class="kw">this</span>.fechaSalida = fOut; <span class="kw">this</span>.estado = <span class="str">"Confirmada"</span>;
+    }
+    <span class="kw">public</span> Cliente getCliente() { <span class="kw">return</span> cliente; }
+    <span class="kw">public</span> Habitacion getHabitacion() { <span class="kw">return</span> habitacion; }
+    <span class="kw">public</span> String getFechaIngreso() { <span class="kw">return</span> fechaIngreso; }
+    <span class="kw">public</span> String getFechaSalida() { <span class="kw">return</span> fechaSalida; }
+}`,
+
+  form: `<span class="kw">package</span> com.hosteria.vista;
+
+<span class="kw">import</span> javax.swing.*;
+<span class="kw">import</span> com.hosteria.datos.ReservaDAO;
+<span class="kw">import</span> com.hosteria.modelo.*;
+
+<span class="kw">public class</span> <span class="cls">FrmReservas</span> <span class="kw">extends</span> JFrame {
+    ReservaDAO dao = <span class="kw">new</span> ReservaDAO();
+
+    <span class="kw">private void</span> btnRegistrarActionPerformed(java.awt.event.ActionEvent evt) {
+        Cliente c = (Cliente) cboCliente.getSelectedItem();
+        Habitacion h = (Habitacion) cboHabitacion.getSelectedItem();
+        String fIn = txtFIngreso.getText();
+        String fOut = txtFSalida.getText();
+
+        Reserva nuevaReserva = <span class="kw">new</span> Reserva(<span class="num">0</span>, c, h, fIn, fOut);
+        dao.guardarReserva(nuevaReserva);
+        actualizarTabla();
+    }
+}`
+};
+
+/* =========================================================
+   LÓGICA DEL SIMULADOR (JAVASCRIPT CORREGIDO)
+   ========================================================= */
+let archivoActual = 'form';
+const $ = id => document.getElementById(id);
+
+// Base de datos vacía
+let clientes = [];
+let habitaciones = [];
+let reservas = [];
+let idCliente = 1;
+let idReserva = 1;
+
+function showFile(nombre, el) {
+  archivoActual = nombre;
+  document.querySelectorAll('.tree-node').forEach(n => n.classList.remove('active'));
+  if (el) el.classList.add('active');
+  
+  const code = CODIGOS[nombre];
+  $('viewSource').innerHTML = code.split('\n').map((line, i) =>
+    `<div class="code-line"><span class="line-num">${i + 1}</span>${line}</div>`
+  ).join('');
+  switchTab('source');
+}
+
+function switchTab(tab) {
+  if (tab === 'source') {
+    $('viewSource').classList.add('active'); $('viewDesign').classList.remove('active');
+    $('tabSource').classList.add('active'); $('tabDesign').classList.remove('active');
+  } else {
+    $('viewSource').classList.remove('active'); $('viewDesign').classList.add('active');
+    $('tabSource').classList.remove('active'); $('tabDesign').classList.add('active');
+  }
+}
+
+function switchJTab(tabName, el) {
+  document.querySelectorAll('.jcontent').forEach(c => c.classList.remove('active'));
+  document.querySelectorAll('.jtab').forEach(t => t.classList.remove('active'));
+  $('jtab-' + tabName).classList.add('active');
+  el.classList.add('active');
+}
+
+function mostrarMensaje(texto, tipo = 'info') {
+  const iconos = { info: 'i', warn: '!', error: '✕', success: '✓' };
+  const titulos = { info: 'Información', warn: 'Advertencia', error: 'Error', success: 'Éxito' };
+  $('dlgIcon').className = 'jdialog-icon icon-' + tipo;
+  $('dlgIcon').textContent = iconos[tipo];
+  $('dlgTitle').textContent = titulos[tipo];
+  $('dlgText').textContent = texto;
+  $('overlay').classList.add('show');
+}
+$('dlgOk').addEventListener('click', () => $('overlay').classList.remove('show'));
+
+// INICIALIZACIÓN (VACÍA)
+function initData() {
+  clientes = []; habitaciones = []; reservas = [];
+  idCliente = 1; idReserva = 1;
+  actualizarUI();
+}
+
+function resetDB() {
+  if (confirm("¿Estás seguro de vaciar la Base de Datos? Se borrarán todas las habitaciones, huéspedes y reservas.")) {
+    initData();
+    mostrarMensaje("Base de Datos vaciada. Comienza a registrar desde cero.", "info");
+    logConsola(`<span class="out-yellow">[JDBC]</span> TRUNCATE TABLE reservas; TRUNCATE TABLE clientes; TRUNCATE TABLE habitaciones;`);
+  }
+}
+
+function actualizarUI() {
+  // 1. Tablas Swing
+  document.querySelector('#tblClientes tbody').innerHTML = 
+    clientes.map(c => `<tr><td>${c.id}</td><td>${c.nombre}</td><td>${c.dni}</td><td>${c.telefono}</td></tr>`).join('');
+
+  document.querySelector('#tblHabitaciones tbody').innerHTML = 
+    habitaciones.map(h => {
+      const color = h.estado === 'Disponible' ? '#2E8B57' : '#D64541';
+      return `<tr><td>${h.numero}</td><td>${h.tipo}</td><td>S/ ${h.precio.toFixed(2)}</td><td style="color:${color};font-weight:bold;">${h.estado}</td></tr>`;
+    }).join('');
+
+  // 2. Combo Huéspedes (Validación si está vacío)
+  if (clientes.length === 0) {
+    $('cboCliente').innerHTML = '<option value="">⚠️ No hay huéspedes registrados</option>';
+  } else {
+    $('cboCliente').innerHTML = '<option value="">Seleccione Huésped</option>' + 
+      clientes.map(c => `<option value="${c.id}">${c.nombre} (${c.dni})</option>`).join('');
+  }
+
+  // 3. Combo Habitaciones (Validación si está vacío u ocupado)
+  const habsDisponibles = habitaciones.filter(h => h.estado === 'Disponible');
+  if (habitaciones.length === 0) {
+    $('cboHabitacion').innerHTML = '<option value="">⚠️ No hay habitaciones en el sistema</option>';
+  } else if (habsDisponibles.length === 0) {
+    $('cboHabitacion').innerHTML = '<option value="">⚠️ Todas las habitaciones están ocupadas</option>';
+  } else {
+    $('cboHabitacion').innerHTML = '<option value="">Seleccione Habitación</option>' + 
+      habsDisponibles.map(h => `<option value="${h.numero}">Hab. ${h.numero} - ${h.tipo}</option>`).join('');
+  }
+
+  // 4. Tabla Reservas
+  filtrarReservas();
+}
+
+function filtrarReservas() {
+  const filtro = $('txtBuscar').value.toLowerCase();
+  const tbody = document.querySelector('#tblReservas tbody');
+  const filtradas = reservas.filter(r => r.cliente.toLowerCase().includes(filtro) || r.habitacion.toLowerCase().includes(filtro));
+  
+  tbody.innerHTML = filtradas.map(r => {
+    let colorEstado = r.estado === 'Confirmada' ? '#2E8B57' : '#D64541';
+    return `<tr>
+      <td>${r.id}</td><td>${r.cliente}</td><td>${r.habitacion}</td>
+      <td>${r.fIngreso}</td><td>${r.fSalida}</td>
+      <td style="color:${colorEstado}; font-weight:bold;">${r.estado}</td>
+    </tr>`;
+  }).join('');
+}
+
+function actualizarVistaSQL() {
+  document.querySelector('#sqlTblClientes tbody').innerHTML = 
+    clientes.map(c => `<tr><td>${c.id}</td><td>"${c.nombre}"</td><td>"${c.dni}"</td><td>"${c.telefono}"</td></tr>`).join('');
+
+  document.querySelector('#sqlTblHabitaciones tbody').innerHTML = 
+    habitaciones.map(h => `<tr><td>"${h.numero}"</td><td>"${h.tipo}"</td><td>${h.precio}</td><td>"${h.estado}"</td></tr>`).join('');
+
+  document.querySelector('#sqlTblReservas tbody').innerHTML = 
+    reservas.map(r => `<tr><td>${r.id}</td><td>${r.idCliente}</td><td>"${r.habitacion}"</td><td>"${r.fIngreso}"</td><td>"${r.fSalida}"</td><td>"${r.estado}"</td></tr>`).join('');
+}
+
+// --- FUNCIONES DE REGISTRO ---
+
+function registrarHabitacion() {
+  const num = $('txtHabNumero').value.trim();
+  const tipo = $('txtHabTipo').value.trim();
+  const precio = parseFloat($('txtHabPrecio').value);
+
+  if (!num || !tipo || isNaN(precio) || precio <= 0) {
+    mostrarMensaje("Complete todos los campos. El precio debe ser mayor a 0.", "warn");
+    return;
+  }
+
+  if (habitaciones.some(h => h.numero === num)) {
+    mostrarMensaje("Ya existe una habitación con ese número.", "error");
+    return;
+  }
+
+  habitaciones.push({ numero: num, tipo: tipo, precio: precio, estado: "Disponible" });
+  
+  $('txtHabNumero').value = ''; $('txtHabTipo').value = ''; $('txtHabPrecio').value = '';
+  actualizarUI();
+  mostrarMensaje("Habitación registrada exitosamente.", "success");
+  
+  logConsola(`<span class="out-yellow">[JDBC]</span> INSERT INTO habitaciones (numero, tipo, precio, estado) VALUES ('${num}', '${tipo}', ${precio}, 'Disponible');`);
+}
+
+function registrarCliente() {
+  const nom = $('txtNombre').value.trim();
+  const dni = $('txtDni').value.trim();
+  const tel = $('txtTelefono').value.trim();
+
+  if (!nom || !dni) { mostrarMensaje("Nombre y DNI obligatorios.", "warn"); return; }
+
+  const newId = idCliente++;
+  clientes.push({id: newId, nombre: nom, dni: dni, telefono: tel});
+  
+  $('txtNombre').value = ''; $('txtDni').value = ''; $('txtTelefono').value = '';
+  actualizarUI();
+  mostrarMensaje("Huésped registrado.", "success");
+  
+  logConsola(`<span class="out-yellow">[JDBC]</span> INSERT INTO clientes (id_cliente, nombre, dni, telefono) VALUES (${newId}, '${nom}', '${dni}', '${tel}');`);
+}
+
+function registrarReserva() {
+  const cId = $('cboCliente').value;
+  const hNum = $('cboHabitacion').value;
+  const fIn = $('txtFIngreso').value;
+  const fOut = $('txtFSalida').value;
+
+  if (!cId) { mostrarMensaje("Por favor, seleccione un Huésped válido.", "warn"); return; }
+  if (!hNum) { mostrarMensaje("Por favor, seleccione una Habitación válida.", "warn"); return; }
+  if (!fIn || !fOut) { mostrarMensaje("Por favor, ingrese las fechas de Ingreso y Salida.", "warn"); return; }
+
+  const cli = clientes.find(c => c.id == cId);
+  const hab = habitaciones.find(h => h.numero === hNum);
+
+  if (hab.estado === 'Ocupada') { mostrarMensaje("La habitación acaba de ser ocupada.", "error"); return; }
+
+  const newIdRes = idReserva++;
+  reservas.push({
+    id: newIdRes, idCliente: cli.id, cliente: cli.nombre, 
+    habitacion: hab.numero, fIngreso: fIn, fSalida: fOut, estado: "Confirmada"
+  });
+  
+  hab.estado = "Ocupada"; 
+  
+  limpiarReserva();
+  actualizarUI();
+  mostrarMensaje("Reserva registrada en la BD.", "success");
+
+  logConsola(`<span class="out-yellow">[JDBC]</span> INSERT INTO reservas (id_reserva, id_cliente, numero_hab, f_ingreso, f_salida, estado) VALUES (${newIdRes}, ${cli.id}, '${hab.numero}', '${fIn}', '${fOut}', 'Confirmada');`);
+  logConsola(`<span class="out-yellow">[JDBC]</span> UPDATE habitaciones SET estado = 'Ocupada' WHERE numero = '${hab.numero}';`);
+}
+
+function cancelarReserva() {
+  if (reservas.length === 0) { mostrarMensaje("No hay reservas para cancelar.", "info"); return; }
+  
+  const idStr = prompt("Ingrese el ID de la reserva a CANCELAR:");
+  if (!idStr) return;
+  
+  const id = parseInt(idStr);
+  const res = reservas.find(r => r.id === id);
+
+  if (!res) { mostrarMensaje("Reserva no encontrada.", "error"); return; }
+  if (res.estado === 'Cancelada') { mostrarMensaje("Esta reserva ya está cancelada.", "warn"); return; }
+
+  res.estado = "Cancelada";
+  const hab = habitaciones.find(h => h.numero === res.habitacion);
+  hab.estado = "Disponible";
+
+  actualizarUI();
+  mostrarMensaje(`Reserva #${id} cancelada. Habitación ${res.habitacion} liberada.`, "info");
+
+  logConsola(`<span class="out-yellow">[JDBC]</span> UPDATE reservas SET estado = 'Cancelada' WHERE id_reserva = ${id};`);
+  logConsola(`<span class="out-yellow">[JDBC]</span> UPDATE habitaciones SET estado = 'Disponible' WHERE numero = '${res.habitacion}';`);
+}
+
+function limpiarReserva() {
+  if(clientes.length > 0) $('cboCliente').value = '';
+  if(habitaciones.length > 0) $('cboHabitacion').value = '';
+  $('txtFIngreso').value = '';
+  $('txtFSalida').value = '';
+}
+
+function logConsola(msg) {
+  const out = $('outputLog');
+  out.innerHTML += `<br><span class="out-white">${msg}</span>`;
+  out.scrollTop = out.scrollHeight;
+}
+
+$('btnRun').addEventListener('click', () => {
+  $('outputLog').innerHTML = 
+    `<span class="out-green">--- exec:3.0:exec (default-cli) @ HosteríaSuiza ---</span><br>` +
+    `<span class="out-white">Compiling 8 source files to target/classes</span><br>` +
+    `<span class="out-green">BUILD SUCCESSFUL</span> (Total time: 3.5 s)<br>` +
+    `<span class="out-blue">-------------------------------------------------------</span><br>` +
+    `<span class="out-white">Ejecutando: com.hosteria.vista.FrmReservas</span><br>` +
+    `<span class="out-green">✅ Conexión exitosa a MySQL (localhost:3306/hosteria_db)</span>`;
+  switchTab('design');
+});
+
+// ARRANQUE
+window.addEventListener('load', () => {
+  const defaultNode = document.querySelector('.tree-node.active');
+  showFile('form', defaultNode);
+  initData();
+  $('outputLog').innerHTML = `<span class="out-green">> NetBeans IDE 18 (Simulador JDBC)</span><br><span class="out-white">> Base de datos vacía. Por favor, registre habitaciones y huéspedes.</span>`;
+});
+</script>
+</body>
+</html>
